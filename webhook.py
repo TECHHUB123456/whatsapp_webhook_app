@@ -5,44 +5,56 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
+VERIFY_TOKEN = "my_custom_token"  # ✅ set this same in Meta
+
+@app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    data = request.get_json()
+    if request.method == 'GET':
+        mode = request.args.get('hub.mode')
+        token = request.args.get('hub.verify_token')
+        challenge = request.args.get('hub.challenge')
 
-    # Optional: Print incoming data for debugging
-    print("Incoming JSON:", data)
+        if mode == 'subscribe' and token == VERIFY_TOKEN:
+            print("✅ Webhook verified successfully!")
+            return challenge, 200
+        else:
+            print("❌ Verification failed.")
+            return "Verification failed", 403
 
-    try:
-        phone_number = data['entry'][0]['changes'][0]['value']['messages'][0]['from']
-        message_text = data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body']
-    except (KeyError, IndexError):
-        return "Invalid format", 400
+    if request.method == 'POST':
+        data = request.get_json()
+        print("📩 Incoming message:", data)
 
-    now = datetime.now()
-    date_str = now.strftime("%Y-%m-%d")
-    time_str = now.strftime("%H:%M:%S")
+        try:
+            phone_number = data['entry'][0]['changes'][0]['value']['messages'][0]['from']
+            message_text = data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body']
+        except (KeyError, IndexError):
+            return "Invalid format", 400
 
-    folder_name = f"messages_{date_str}"
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
+        now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d")
+        time_str = now.strftime("%H:%M:%S")
 
-    file_path = os.path.join(folder_name, f"{date_str}.xlsx")
+        folder_name = f"messages_{date_str}"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
 
-    data_entry = pd.DataFrame([{
-        "Phone Number": phone_number,
-        "Message": message_text,
-        "Time": time_str
-    }])
+        file_path = os.path.join(folder_name, f"{date_str}.xlsx")
 
-    if os.path.exists(file_path):
-        existing_df = pd.read_excel(file_path)
-        final_df = pd.concat([existing_df, data_entry], ignore_index=True)
-    else:
-        final_df = data_entry
+        data_entry = pd.DataFrame([{
+            "Phone Number": phone_number,
+            "Message": message_text,
+            "Time": time_str
+        }])
 
-    final_df.to_excel(file_path, index=False)
+        if os.path.exists(file_path):
+            existing_df = pd.read_excel(file_path)
+            final_df = pd.concat([existing_df, data_entry], ignore_index=True)
+        else:
+            final_df = data_entry
 
-    return "Message saved", 200
+        final_df.to_excel(file_path, index=False)
+        return "Message saved", 200
 
 @app.route("/", methods=["GET"])
 def home():
@@ -50,6 +62,5 @@ def home():
 
 if __name__ == '__main__':
     import os
-    port = int(os.environ.get("PORT", 5000))  # 👈 required for Render
-    print(f"Webhook running on http://0.0.0.0:{port}/webhook")
-    app.run(host="0.0.0.0", port=port, debug=True)  # 👈 required for Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
