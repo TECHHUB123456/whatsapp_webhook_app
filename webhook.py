@@ -44,6 +44,12 @@ def webhook():
 
     return "Message saved", 200
 
+@app.route("/", methods=["GET"])
+def home():
+    return "Webhook is running", 200
+
 if __name__ == '__main__':
-    print("Webhook running on http://localhost:5000/webhook")
-    app.run(port=5000, debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))  # 👈 required for Render
+    print(f"Webhook running on http://0.0.0.0:{port}/webhook")
+    app.run(host="0.0.0.0", port=port, debug=True)  # 👈 required for Render
