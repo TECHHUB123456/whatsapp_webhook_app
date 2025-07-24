@@ -5,7 +5,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-VERIFY_TOKEN = "my_custom_token"  # ✅ set this same in Meta
+VERIFY_TOKEN = "EAAhfFF4ze8YBPHHDUMq2pZCZAVqkxZAf4ZAA44BwXP4yFUDfKO9xeVyKTvEnssBlwJDoSFNn02qZCdRvoz2sFxOkg7y1MW2GqWEVzlGNgiEKFglEwxRJ3d13wewfv8OdVAqv1JZAku2xoXQq60ZCym8xXMCCrwyzGL18k93gJeJF7SZBB1iAZCsMDJDgmiOn7HZBAMgPJZB80IsdlhKBI3by9u4qkHR5cdZCteR2UqPocGrGTxi7EAZDZD"  # ✅ set this same in Meta
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
